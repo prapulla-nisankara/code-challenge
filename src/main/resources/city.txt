@@ -1,0 +1,8 @@
+Boston, New York
+Philadelphia, Newark
+Newark, Boston
+Trenton, Albany
+Fort Worth, Dallas
+Dallas, Austin
+Austin, San Antonio
+San Antonio, Houston
