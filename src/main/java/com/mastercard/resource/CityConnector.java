@@ -20,6 +20,9 @@ import org.springframework.stereotype.Component;
  * Component that load's origin and destination city pairs from properties file city.txt
  * 
  * provides one public method findCityPair to check whether two cities are connected or not
+ * 
+ * City Names are case sensitive
+ * TODO city name's should have been case insensitive 
  *
  */
 @Component
