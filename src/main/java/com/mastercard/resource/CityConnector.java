@@ -28,7 +28,7 @@ public class CityConnector{
 	
 	
 	/**
-	 * Map<OriginCity, ArrayList<CitiesConnectedByRoad>>
+	 * Map<OriginCity, HashSet<CitiesConnectedByRoad>>
 	 */
 	Map<String, HashSet<String>> myMap = new HashMap<>();
 	
