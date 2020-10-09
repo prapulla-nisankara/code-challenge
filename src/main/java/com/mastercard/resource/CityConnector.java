@@ -3,7 +3,6 @@ package com.mastercard.resource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class CityConnector{
 	/**
 	 * Map<OriginCity, ArrayList<CitiesConnectedByRoad>>
 	 */
-	Map<String, ArrayList<String>> myMap = new HashMap<>();
+	Map<String, HashSet<String>> myMap = new HashMap<>();
 	
 	/**
 	 * Construct a map with origin city and it's directly connected destination cities.
@@ -77,7 +76,7 @@ public class CityConnector{
 				String line;
 			    while((line = reader.readLine()) != null)
 			    {
-			    	//Expecting the file is properly formated and contains two city pair separated by comma per line. No sanity checks 
+			    	//Expecting the file is properly formated and contains two city pair separated by comma per line. 
 			    	System.out.println(line);
 			    	String[] values = line.split(",");
 			    	if(values.length>1)
@@ -101,7 +100,7 @@ public class CityConnector{
 		    }
 		}
 		else {
-			//TODO better handling of 
+			//TODO better handling of not finding resources
 			System.out.println("No Resource");
 		}
 		System.out.println(myMap);		
@@ -109,33 +108,38 @@ public class CityConnector{
 	
 	private void addCityPair(String city1, String city2) {
 		if(!myMap.containsKey(city1)) {
-			ArrayList<String> aList = new ArrayList<>();
-			aList.add(city2);
-			myMap.put(city1, aList);
+			HashSet<String> aHashSet = new HashSet<>();
+			aHashSet.add(city2);
+			myMap.put(city1, aHashSet);
 		}else {
-			ArrayList<String> aList = myMap.get(city1);
-			if(!aList.contains(city2)){
-				aList.add(city2);
+			HashSet<String> aHashSet = myMap.get(city1);
+			if(!aHashSet.contains(city2)){
+				aHashSet.add(city2);
 			}			
 		}
 	}
 	
 	
 	/**
+	 * Make sure origin and destination city exists. And then traverse to find the connected city
 	 * @param originCity
 	 * @param destinationCity
 	 * @return <tt>true</tt> if Origin and Designation cities connected by Road
 	 */
 	public boolean findCityPair(String originCity, String destinationCity) {		
-		Set<String> inspectedKeys = new HashSet<>(); 		
-		return findCityPair(originCity, destinationCity, inspectedKeys);		
+		Set<String> inspectedKeys = new HashSet<>(); 
+		//Make sure origin and destination city exists
+		if(myMap.containsKey(originCity) && myMap.containsKey(destinationCity)) 
+		{
+			return findCityPair(originCity, destinationCity, inspectedKeys);
+		}
+		return false;	
 	}
 	
 	/**
 	 * Start your road trip from the Origin city and don't stop until you reach all the cities or no more cities left.
-	 * Make sure origin and destination city exists.
-	 * Attempt for a direct match
-	 * Not found. Never mind. Find the route via cities.
+	 * 
+	 * Attempt for a direct match. Not found. Never mind. Find the route via other connected cities.
 	 * 
 	 * @param originCity
 	 * @param destinationCity
@@ -144,27 +148,23 @@ public class CityConnector{
 	 */
 	private boolean findCityPair(String originCity, String destinationCity, Set<String> inspectedCityKeys)
 	{	
-		//Make sure origin and destination city exists
-		if(myMap.containsKey(originCity) && myMap.containsKey(destinationCity)) 
-		{
-			//Retrieve cities that were connected by Road
-			ArrayList<String> aList1 = myMap.get(originCity);
-			System.out.println("originCity:"+originCity+" -> "+aList1 + " destinationCity -> "+destinationCity);			
-			
-			//A direct Match. Hurry. return true
-			if(aList1.contains(destinationCity)) {
-				System.out.println("Found");
+		//Retrieve cities that were connected by Road
+		HashSet<String> aList1 = myMap.get(originCity);
+		System.out.println("originCity:"+originCity+" -> "+aList1 + " destinationCity -> "+destinationCity);			
+		
+		//A direct Match. Hurry. return true
+		if(aList1.contains(destinationCity)) {
+			System.out.println("Found");
+			return true;
+		}
+		//Not found. Now retrieved cities will become origin cities. Our destination remains same.
+		inspectedCityKeys.add(originCity);			
+		for (String nextConnectedCity : aList1) {
+			//Don't inspect the city that was already inspected. 
+			//Let's begin the journey. fasten the seat belts and don't stop until all cities were visited. 
+			if (!inspectedCityKeys.contains(nextConnectedCity)
+					&& (findCityPair(nextConnectedCity, destinationCity, inspectedCityKeys))) {
 				return true;
-			}
-			//Not found. Now retrieved cities will become origin cities. Our destination remains same.
-			inspectedCityKeys.add(originCity);			
-			for (String nextConnectedCity : aList1) {
-				//Don't inspect the city that was already inspected. 
-				//Let's begin the journey. fasten the seat belts and don't stop until all cities were visited. 
-				if (!inspectedCityKeys.contains(nextConnectedCity)
-						&& (findCityPair(nextConnectedCity, destinationCity, inspectedCityKeys))) {
-					return true;
-				}
 			}
 		}
 		//Oops Not found. Never mind. Demand better roads.
