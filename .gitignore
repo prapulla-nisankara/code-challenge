@@ -50,3 +50,6 @@ build/
 
 # Maven 
 target/
+
+# Logs 
+logs/

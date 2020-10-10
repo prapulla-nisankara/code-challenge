@@ -7,12 +7,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+
+import com.mastercard.exception.CityLoadException;
 
 /**
  * @author Prapulla Nisankara
@@ -29,6 +34,8 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class CityConnector{
 	
+	   private static final Logger logger = LoggerFactory.getLogger(CityConnector.class);
+
 	
 	/**
 	 * Map<OriginCity, HashSet<CitiesConnectedByRoad>>
@@ -69,10 +76,11 @@ public class CityConnector{
 	 * }
 	 * 
 	 * @param resourceLoader
+	 * @throws CityLoadException 
 	 */
 	@Autowired
-	public CityConnector(ResourceLoader resourceLoader) {
-		System.out.println(resourceLoader);
+	public CityConnector(ResourceLoader resourceLoader) throws CityLoadException {
+		logger.debug("Start loading city resource");
 		Resource resource = resourceLoader.getResource("classpath:city.txt");	
 		if (resource.exists() ) {
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
@@ -80,7 +88,7 @@ public class CityConnector{
 			    while((line = reader.readLine()) != null)
 			    {
 			    	//Expecting the file is properly formated and contains two city pair separated by comma per line. 
-			    	System.out.println(line);
+			    	logger.debug(line);
 			    	String[] values = line.split(",");
 			    	if(values.length>1)
 			    	{
@@ -98,15 +106,25 @@ public class CityConnector{
 		    } 
 		    catch (IOException e) 
 		    {
-		    	//TODO need proper logging and exit process
-		    	System.out.println(e);
+		    	logger.error("City resource loaded failed");
+		    	logger.error(e.getStackTrace().toString());
+		    	throw new CityLoadException(102, "Reading City resource file failed");
 		    }
 		}
 		else {
-			//TODO better handling of not finding resources
-			System.out.println("No Resource");
+			logger.error("Resource city.txt not found");
+			throw new CityLoadException(101, "Resource city.txt not found");
+		}		
+		logger.debug(myMap.toString());		
+		if(myMap.size()>0)
+		{
+			logger.info("Loading city resource success");
 		}
-		System.out.println(myMap);		
+		else
+		{
+			logger.info("Load resouce went smooth. But cities found");
+			throw new CityLoadException(103, "Load resource went smooth. But No cities found");
+		}
 	}		
 	
 	private void addCityPair(String city1, String city2) {
@@ -140,9 +158,14 @@ public class CityConnector{
 	}
 	
 	/**
-	 * Start your road trip from the Origin city and don't stop until you reach all the cities or no more cities left.
+	 * Start your road trip from the Origin city.
 	 * 
 	 * Attempt for a direct match. Not found. Never mind. Find the route via other connected cities.
+	 * 
+	 * Check if the destination is directly connected.
+	 * If not directly connected find the path via route. 
+	 * don't stop until you reach destination covering all the cities.
+	 * Avoid the cities that were visited
 	 * 
 	 * @param originCity
 	 * @param destinationCity
@@ -152,26 +175,17 @@ public class CityConnector{
 	private boolean findCityPair(String originCity, String destinationCity, Set<String> inspectedCityKeys)
 	{	
 		//Retrieve cities that were connected by Road
-		HashSet<String> aList1 = myMap.get(originCity);
-		System.out.println("originCity:"+originCity+" -> "+aList1 + " destinationCity -> "+destinationCity);			
+		HashSet<String> connectedCities = myMap.get(originCity);
+		logger.debug("originCity:"+originCity+" -> "+connectedCities + " destinationCity -> "+destinationCity);			
 		
 		//A direct Match. Hurry. return true
-		if(aList1.contains(destinationCity)) {
-			System.out.println("Found");
+		if(connectedCities.contains(destinationCity)) {
+			logger.debug("Both the cities were connected");
 			return true;
 		}
 		//Not found. Now retrieved cities will become origin cities. Our destination remains same.
-		inspectedCityKeys.add(originCity);			
-		for (String nextConnectedCity : aList1) {
-			//Don't inspect the city that was already inspected. 
-			//Let's begin the journey. fasten the seat belts and don't stop until all cities were visited. 
-			if (!inspectedCityKeys.contains(nextConnectedCity)
-					&& (findCityPair(nextConnectedCity, destinationCity, inspectedCityKeys))) {
-				return true;
-			}
-		}
-		//Oops Not found. Never mind. Demand better roads.
-		return false;
+		inspectedCityKeys.add(originCity);	
+		return connectedCities.stream().anyMatch(c -> !inspectedCityKeys.contains(c) && findCityPair(c, destinationCity, inspectedCityKeys)  );
 	}
 	
 }

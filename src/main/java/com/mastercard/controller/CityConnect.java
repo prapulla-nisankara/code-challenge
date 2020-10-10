@@ -20,8 +20,9 @@ public class CityConnect {
 	private CityConnector cityConnector;
 
 	@RequestMapping( method = RequestMethod.GET)
-    public String citiesConnected(@RequestParam("origin") String originCity, @RequestParam("destination") String destinationCity) {
-		if(!originCity.isEmpty() && !destinationCity.isEmpty() && cityConnector.findCityPair(originCity, destinationCity)) {
+    public String citiesConnected(@RequestParam(value = "origin", required = false) String originCity, @RequestParam(value = "destination", required = false) String destinationCity) {
+		if (originCity != null && !originCity.isEmpty() && destinationCity != null && !destinationCity.isEmpty()
+				&& cityConnector.findCityPair(originCity, destinationCity)) {
 			return "Yes";
 		}
         return "No";
