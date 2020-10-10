@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +16,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 import com.mastercard.exception.CityLoadException;
+import com.mastercard.search.FindConnctedCities;
 
 /**
  * @author Prapulla Nisankara
@@ -25,6 +24,8 @@ import com.mastercard.exception.CityLoadException;
  * Component that load's origin and destination city pairs from properties file city.txt
  * 
  * provides one public method findCityPair to check whether two cities are connected or not
+ * 
+ * search visitor to find the connected cities
  * 
  * City Names are case sensitive
  * TODO city name's should have been case insensitive 
@@ -34,7 +35,7 @@ import com.mastercard.exception.CityLoadException;
 @Scope("singleton")
 public class CityConnector{
 	
-	   private static final Logger logger = LoggerFactory.getLogger(CityConnector.class);
+	private static final Logger logger = LoggerFactory.getLogger(CityConnector.class);
 
 	
 	/**
@@ -66,7 +67,8 @@ public class CityConnector{
 	 * New York=[Boston], 
 	 * San Antonio=[Austin, Houston], 
 	 * Newark=[Philadelphia, Boston], 
-	 * Trenton=[Albany], Fort Worth=[Dallas], 
+	 * Trenton=[Albany], 
+	 * Fort Worth=[Dallas], 
 	 * Austin=[Dallas, San Antonio], 
 	 * Dallas=[Fort Worth, Austin], 
 	 * Philadelphia=[Newark], 
@@ -140,52 +142,8 @@ public class CityConnector{
 		}
 	}
 	
-	
-	/**
-	 * Make sure origin and destination city exists. And then traverse to find the connected city
-	 * @param originCity
-	 * @param destinationCity
-	 * @return <tt>true</tt> if Origin and Designation cities connected by Road
-	 */
-	public boolean findCityPair(String originCity, String destinationCity) {		
-		Set<String> inspectedKeys = new HashSet<>(); 
-		//Make sure origin and destination city exists
-		if(myMap.containsKey(originCity) && myMap.containsKey(destinationCity)) 
-		{
-			return findCityPair(originCity, destinationCity, inspectedKeys);
-		}
-		return false;	
-	}
-	
-	/**
-	 * Start your road trip from the Origin city.
-	 * 
-	 * Attempt for a direct match. Not found. Never mind. Find the route via other connected cities.
-	 * 
-	 * Check if the destination is directly connected.
-	 * If not directly connected find the path via route. 
-	 * don't stop until you reach destination covering all the cities.
-	 * Avoid the cities that were visited
-	 * 
-	 * @param originCity
-	 * @param destinationCity
-	 * @param inspectedCityKeys The cities that were already inspected. This will help break the recursive loop 
-	 * @return <tt>true</tt> if Origin and destination cities connected by Road
-	 */
-	private boolean findCityPair(String originCity, String destinationCity, Set<String> inspectedCityKeys)
-	{	
-		//Retrieve cities that were connected by Road
-		HashSet<String> connectedCities = myMap.get(originCity);
-		logger.debug("originCity:"+originCity+" -> "+connectedCities + " destinationCity -> "+destinationCity);			
-		
-		//A direct Match. Hurry. return true
-		if(connectedCities.contains(destinationCity)) {
-			logger.debug("Both the cities were connected");
-			return true;
-		}
-		//Not found. Now retrieved cities will become origin cities. Our destination remains same.
-		inspectedCityKeys.add(originCity);	
-		return connectedCities.stream().anyMatch(c -> !inspectedCityKeys.contains(c) && findCityPair(c, destinationCity, inspectedCityKeys)  );
+	public boolean isCitiesConnected(String originCity, String destinationCity, FindConnctedCities cityFinder) {
+		return cityFinder.isCitiesConnected(originCity, destinationCity, myMap);
 	}
 	
 }
