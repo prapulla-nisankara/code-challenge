@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "city.search",
+  "type": "java.lang.String",
+  "description": "Select Search Strategy"
+}]}

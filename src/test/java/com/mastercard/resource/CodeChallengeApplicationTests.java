@@ -1,15 +1,6 @@
 package com.mastercard.resource;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -22,13 +13,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.FieldSetter;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 
-import com.mastercard.exception.CityLoadException;
 import com.mastercard.search.CityConnectionSearch;
 import com.mastercard.search.SimpleSearch;
+import com.mastercard.search.multithread.SearchWithCallable;
+import com.mastercard.search.multithread.SearchWithFork;
 
 /**
  * @author Prapulla Nisankara
@@ -46,20 +37,39 @@ class CodeChallengeApplicationTests {
 	@Mock
 	SimpleSearch simpleSearch;
 	
+	@Mock
+	SearchWithCallable searchWithCallable;
+	
+	@Mock
+	SearchWithFork searchWithFork;
+	
 	@InjectMocks
 	CityConnectionSearch CityConnectionSearch;	
 	
 	/**
 	 * Test city names exists in CityConntector
+	 * @throws SecurityException 
+	 * @throws NoSuchFieldException 
 	 */
 	@Test
 	@Order(1)
-	void testCityConnectorResource() {			
+	void testCityConnectorResource() throws NoSuchFieldException, SecurityException {			
 		Assertions.assertFalse(CityConnectionSearch.findCityPair("", ""));		
 		Assertions.assertFalse(CityConnectionSearch.findCityPair("Boston", "Newark"));
 		
+		FieldSetter.setField(CityConnectionSearch, CityConnectionSearch.getClass().getDeclaredField("seatchStratagy"), "searchWithCallable");
+		
+		Mockito.when(cityConnector.isCitiesConnected("Boston", "Newark", searchWithCallable)).thenReturn(true);
+		Assertions.assertTrue(CityConnectionSearch.findCityPair("Boston", "Newark"));
+		
+		FieldSetter.setField(CityConnectionSearch, CityConnectionSearch.getClass().getDeclaredField("seatchStratagy"), "searchWithFork");
+		Mockito.when(cityConnector.isCitiesConnected("Boston", "Newark", searchWithFork)).thenReturn(true);
+		Assertions.assertTrue(CityConnectionSearch.findCityPair("Boston", "Newark"));
+		
+		FieldSetter.setField(CityConnectionSearch, CityConnectionSearch.getClass().getDeclaredField("seatchStratagy"), "");
 		Mockito.when(cityConnector.isCitiesConnected("Boston", "Newark", simpleSearch)).thenReturn(true);
 		Assertions.assertTrue(CityConnectionSearch.findCityPair("Boston", "Newark"));
+		
 	}
 	
 	
