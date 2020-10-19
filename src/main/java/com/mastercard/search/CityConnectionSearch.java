@@ -1,22 +1,22 @@
 package com.mastercard.search;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import com.mastercard.resource.CityConnector;
-import com.mastercard.search.multithread.SearchWithCallable;
-import com.mastercard.search.multithread.SearchWithFork;
+//import com.mastercard.search.multithread.SearchWithCallable;
+//import com.mastercard.search.multithread.SearchWithFork;
 
-@PropertySource("classpath:application.properties")
+//@PropertySource("classpath:application.properties")
 @Component
 public class CityConnectionSearch {
 	
-	private static String searchCallableStr = "searchWithCallable";
+	//private static String searchCallableStr = "searchWithCallable";
 	
-	private static String searchForkStr = "searchWithFork";
+	//private static String searchForkStr = "searchWithFork";
 	
 	/**
 	 * Easy to inject city pair repo
@@ -24,12 +24,13 @@ public class CityConnectionSearch {
 	@Autowired
 	private CityConnector cityConnector;
 	
-	@Value("${city.search}")
-	private String seatchStratagy;
-	
 	/**
 	 * Easy to inject alternate search algorithm
 	 */
+	
+	/*@Value("${city.search}")
+	private String seatchStratagy;	
+	
 	@Autowired
 	@Qualifier("simpleSearch")
 	private FindConnctedCities simpleSearch;
@@ -40,10 +41,14 @@ public class CityConnectionSearch {
 	
 	@Autowired
 	@Qualifier("searchWithFork")
-	private SearchWithFork searchWithFork;
+	private SearchWithFork searchWithFork;*/
+	
+	@Autowired
+	FindConnctedCities findConnctedCities;
 	
 	public boolean findCityPair(String originCity, String destinationCity) {
-		if(searchCallableStr.equalsIgnoreCase(seatchStratagy))
+		return cityConnector.isCitiesConnected(originCity, destinationCity, findConnctedCities);
+		/*if(searchCallableStr.equalsIgnoreCase(seatchStratagy))
 		{
 			return cityConnector.isCitiesConnected(originCity, destinationCity, searchWithCallable);
 		}
@@ -54,6 +59,6 @@ public class CityConnectionSearch {
 		else
 		{
 			return cityConnector.isCitiesConnected(originCity, destinationCity, simpleSearch);
-		}
+		}*/
 	}
 }

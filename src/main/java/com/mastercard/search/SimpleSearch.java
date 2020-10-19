@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author Prapulla Nisakara
+ * Traverse from root node to child nodes all the way down until connected city was found
  *
  */
 @Component("simpleSearch")
