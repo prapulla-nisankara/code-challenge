@@ -38,6 +38,7 @@ public class SearchStrategy {
 	@Bean
 	@Primary
 	public FindConnctedCities getSearchStrategy() {
+		logger.debug("Use seatchStratagy------------------------->"+seatchStratagy);
 		if (searchCallableStr.equalsIgnoreCase(seatchStratagy)) {
 			logger.debug("Use SearchWithCallable");
 			return new SearchWithCallable();
